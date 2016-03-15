@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>ActionCable Stock Ticker Tutorial</title>
+  <meta name="description" content="Rails ActionCable allows you to open a socket connection from inside rails to the client.   This tutorial shows a simple Rails stock ticker example utilizing ActionCable.
+">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="/">
+  <link rel="alternate" type="application/rss+xml" title="ActionCable Stock Ticker Tutorial" href="/feed.xml">
+</head>
+
+
+  <body>
+
+    <div class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">ActionCable Stock Ticker Tutorial</a><br/>
+      
+        <a href="https://github.com/DanielMachen"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">DanielMachen</span></a>
+
+      
+  </div>
+</div>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="home">
+
+  <h1 id="intro">Intro</h1>
+
+  <div class="sidenav">
+    <h1 id="index">Index</h1>
+    <ul>
+      <li><a href="#setting-up-rails-5">Setting up Rails 5</a></li>
+      <li><a href="#the-first-step">The First Step</a></li>
+      <li><a href="#preparing-the-models-controllers-and-views">Preparing the models, controllers and views</a></li>
+      <li><a href="#enabling-actioncable">Enabling ActionCable</a></li>
+      <li><a href="#the-actioncable-portion">The ActionCable Portion</a></li>
+      <li><a href="#using-the-actioncable-portion">Using the ActionCable Portion</a></li>
+      <li><a href="#refining-the-actioncable-portion">Refining the ActionCable Portion</a></li>
+      <li><a href="#diagrams">Diagrams</a></li>
+      <li><a href="#copyright-notices-and-such">Copyright Notices and Such</a></li>
+    </ul>
+  </div>
+  <p>Rails ActionCable allows you to open a socket connection from inside rails to the client and then push info from the server to the client.  HTTP was designed for the client to ask for info from the server in the form of a request and then the server would send info to the client, whereas web sockets enables the server or the client to be the initiator and send info without either knowing when it’s coming.  This tutorial will cover a basic stock ticker example utilizing the Rails 5 feature.  The example will display stocks with their price and the price of the stocks will update on the clients browser whenever it changes.</p>
+
+  <h1 id="rails-actioncable-tutorial">Rails ActionCable Tutorial</h1>
+
+  <h2 id="setting-up-rails-5">Setting up Rails 5</h2>
+  <p>To get started you need to be using rails5-beta3<br />
+This process is largely up to you but here is one way of doing this with RVM:</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rvm gemset create rails5-beta3
+ruby-2.2.2 - #gemset created /home/agent-006/.rvm/gems/ruby-2.2.2@rails5-beta3
+ruby-2.2.2 - #generating rails5-beta3 wrappers........
+</code></pre>
+  </div>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rvm gemset use rails5-beta3
+Using ruby-2.2.2 with gemset rails5-beta3
+</code></pre>
+  </div>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ gem install rails -v 5.0.0.beta3 --no-rdoc --no-ri
+Fetching: rack-2.0.0.alpha.gem (100%)
+Successfully installed rack-2.0.0.alpha
+Fetching: concurrent-ruby-1.0.1.gem (100%)
+Successfully installed concurrent-ruby-1.0.1
+Fetching: sprockets-3.5.2.gem (100%)
+Successfully installed sprockets-3.5.2
+Fetching: thread_safe-0.3.5.gem (100%)
+Successfully installed thread_safe-0.3.5
+Fetching: tzinfo-1.2.2.gem (100%)
+Successfully installed tzinfo-1.2.2
+Fetching: i18n-0.7.0.gem (100%)
+Successfully installed i18n-0.7.0
+Fetching: activesupport-5.0.0.beta3.gem (100%)
+Successfully installed activesupport-5.0.0.beta3
+Fetching: mini_portile2-2.0.0.gem (100%)
+Successfully installed mini_portile2-2.0.0
+Fetching: nokogiri-1.6.7.2.gem (100%)
+Building native extensions.  This could take a while...
+Successfully installed nokogiri-1.6.7.2
+Fetching: loofah-2.0.3.gem (100%)
+Successfully installed loofah-2.0.3
+Fetching: rails-html-sanitizer-1.0.3.gem (100%)
+Successfully installed rails-html-sanitizer-1.0.3
+Fetching: rails-deprecated_sanitizer-1.0.3.gem (100%)
+Successfully installed rails-deprecated_sanitizer-1.0.3
+Fetching: rails-dom-testing-1.0.7.gem (100%)
+Successfully installed rails-dom-testing-1.0.7
+Fetching: rack-test-0.6.3.gem (100%)
+Successfully installed rack-test-0.6.3
+Fetching: erubis-2.7.0.gem (100%)
+Successfully installed erubis-2.7.0
+Fetching: builder-3.2.2.gem (100%)
+Successfully installed builder-3.2.2
+Fetching: actionview-5.0.0.beta3.gem (100%)
+Successfully installed actionview-5.0.0.beta3
+Fetching: actionpack-5.0.0.beta3.gem (100%)
+Successfully installed actionpack-5.0.0.beta3
+Fetching: sprockets-rails-3.0.3.gem (100%)
+Successfully installed sprockets-rails-3.0.3
+Fetching: thor-0.19.1.gem (100%)
+Successfully installed thor-0.19.1
+Fetching: method_source-0.8.2.gem (100%)
+Successfully installed method_source-0.8.2
+Fetching: railties-5.0.0.beta3.gem (100%)
+Successfully installed railties-5.0.0.beta3
+Fetching: bundler-1.11.2.gem (100%)
+Successfully installed bundler-1.11.2
+Fetching: arel-7.0.0.gem (100%)
+Successfully installed arel-7.0.0
+Fetching: activemodel-5.0.0.beta3.gem (100%)
+Successfully installed activemodel-5.0.0.beta3
+Fetching: activerecord-5.0.0.beta3.gem (100%)
+Successfully installed activerecord-5.0.0.beta3
+Fetching: globalid-0.3.6.gem (100%)
+Successfully installed globalid-0.3.6
+Fetching: activejob-5.0.0.beta3.gem (100%)
+Successfully installed activejob-5.0.0.beta3
+Fetching: mime-types-2.99.1.gem (100%)
+Successfully installed mime-types-2.99.1
+Fetching: mail-2.6.3.gem (100%)
+Successfully installed mail-2.6.3
+Fetching: actionmailer-5.0.0.beta3.gem (100%)
+Successfully installed actionmailer-5.0.0.beta3
+Fetching: websocket-extensions-0.1.2.gem (100%)
+Successfully installed websocket-extensions-0.1.2
+Fetching: websocket-driver-0.6.3.gem (100%)
+Building native extensions.  This could take a while...
+Successfully installed websocket-driver-0.6.3
+Fetching: nio4r-1.2.1.gem (100%)
+Building native extensions.  This could take a while...
+Successfully installed nio4r-1.2.1
+Fetching: actioncable-5.0.0.beta3.gem (100%)
+Successfully installed actioncable-5.0.0.beta3
+Fetching: rails-5.0.0.beta3.gem (100%)
+Successfully installed rails-5.0.0.beta3
+36 gems installed
+</code></pre>
+  </div>
+
+  <p><sub>Note, when the terminal session is closed RVM will revert to the default gemset which will have whatever Rails version you had before.  Use <code class="bash">$&nbsp;rvm&nbsp;gemset&nbsp;use&nbsp;rails5-beta3</code> to use Rails 5 again.</sub></p>
+
+  <p>To make sure Rails 5 is properly configured run the command: <code class="bash">$&nbsp;rails&nbsp;-v</code> It should output: <code>Rails&nbsp;5.0.0.beta3</code></p>
+
+  <h2 id="the-first-step">The First Step</h2>
+
+  <p>Now the environment is setup and ready to create a Rails 5 application.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rails new stock-ticker
+      create  
+      create  README.md
+      create  Rakefile
+      create  config.ru
+      create  .gitignore
+      create  Gemfile
+      create  app
+      create  app/assets/config/manifest.js
+      create  app/assets/javascripts/application.js
+      create  app/assets/javascripts/cable.coffee
+      create  app/assets/stylesheets/application.css
+      create  app/channels/application_cable/channel.rb
+      create  app/channels/application_cable/connection.rb
+      create  app/controllers/application_controller.rb
+      create  app/helpers/application_helper.rb
+      create  app/jobs/application_job.rb
+      create  app/mailers/application_mailer.rb
+      create  app/models/application_record.rb
+      create  app/views/layouts/application.html.erb
+      create  app/views/layouts/mailer.html.erb
+      create  app/views/layouts/mailer.text.erb
+      create  app/assets/images/.keep
+      create  app/assets/javascripts/channels
+      create  app/assets/javascripts/channels/.keep
+      create  app/controllers/concerns/.keep
+      create  app/models/concerns/.keep
+      create  bin
+      create  bin/bundle
+      create  bin/rails
+      create  bin/rake
+      create  bin/setup
+      create  bin/update
+      create  config
+      create  config/routes.rb
+      create  config/application.rb
+      create  config/environment.rb
+      create  config/secrets.yml
+      create  config/cable.yml
+      create  config/puma.rb
+      create  config/environments
+      create  config/environments/development.rb
+      create  config/environments/production.rb
+      create  config/environments/test.rb
+      create  config/initializers
+      create  config/initializers/active_record_belongs_to_required_by_default.rb
+      create  config/initializers/application_controller_renderer.rb
+      create  config/initializers/assets.rb
+      create  config/initializers/backtrace_silencers.rb
+      create  config/initializers/callback_terminator.rb
+      create  config/initializers/cookies_serializer.rb
+      create  config/initializers/cors.rb
+      create  config/initializers/filter_parameter_logging.rb
+      create  config/initializers/inflections.rb
+      create  config/initializers/mime_types.rb
+      create  config/initializers/per_form_csrf_tokens.rb
+      create  config/initializers/request_forgery_protection.rb
+      create  config/initializers/session_store.rb
+      create  config/initializers/wrap_parameters.rb
+      create  config/locales
+      create  config/locales/en.yml
+      create  config/boot.rb
+      create  config/database.yml
+      create  db
+      create  db/seeds.rb
+      create  lib
+      create  lib/tasks
+      create  lib/tasks/.keep
+      create  lib/assets
+      create  lib/assets/.keep
+      create  log
+      create  log/.keep
+      create  public
+      create  public/404.html
+      create  public/422.html
+      create  public/500.html
+      create  public/apple-touch-icon-precomposed.png
+      create  public/apple-touch-icon.png
+      create  public/favicon.ico
+      create  public/robots.txt
+      create  test/fixtures
+      create  test/fixtures/.keep
+      create  test/fixtures/files
+      create  test/fixtures/files/.keep
+      create  test/controllers
+      create  test/controllers/.keep
+      create  test/mailers
+      create  test/mailers/.keep
+      create  test/models
+      create  test/models/.keep
+      create  test/helpers
+      create  test/helpers/.keep
+      create  test/integration
+      create  test/integration/.keep
+      create  test/test_helper.rb
+      create  tmp
+      create  tmp/.keep
+      create  tmp/cache
+      create  tmp/cache/assets
+      create  vendor/assets/javascripts
+      create  vendor/assets/javascripts/.keep
+      create  vendor/assets/stylesheets
+      create  vendor/assets/stylesheets/.keep
+      remove  config/initializers/cors.rb
+         run  bundle install
+Fetching gem metadata from https://rubygems.org/...........
+Fetching version metadata from https://rubygems.org/...
+Fetching dependency metadata from https://rubygems.org/..
+Resolving dependencies.......
+Installing rake 10.5.0
+Using concurrent-ruby 1.0.1
+Using i18n 0.7.0
+Installing minitest 5.8.4
+Using thread_safe 0.3.5
+Using builder 3.2.2
+Using erubis 2.7.0
+Using mini_portile2 2.0.0
+Installing json 1.8.3 with native extensions
+Using nio4r 1.2.1
+Using websocket-extensions 0.1.2
+Using mime-types 2.99.1
+Using arel 7.0.0
+Using bundler 1.11.2
+Installing byebug 8.2.2 with native extensions
+Installing coffee-script-source 1.10.0
+Installing execjs 2.6.0
+Using method_source 0.8.2
+Using thor 0.19.1
+Installing debug_inspector 0.0.2 with native extensions
+Installing ffi 1.9.10 with native extensions
+Installing multi_json 1.11.2
+Installing rb-fsevent 0.9.7
+Installing puma 3.0.2 with native extensions
+Installing sass 3.4.21
+Installing tilt 2.0.2
+Installing spring 1.6.4
+Installing sqlite3 1.3.11 with native extensions
+Installing turbolinks-source 5.0.0.beta2
+Using tzinfo 1.2.2
+Using nokogiri 1.6.7.2
+Using rack 2.0.0.alpha
+Using websocket-driver 0.6.3
+Using mail 2.6.3
+Installing coffee-script 2.4.1
+Installing uglifier 2.7.2
+Installing rb-inotify 0.9.7
+Installing turbolinks 5.0.0.beta2
+Using activesupport 5.0.0.beta3
+Using loofah 2.0.3
+Using rack-test 0.6.3
+Using sprockets 3.5.2
+Installing listen 3.0.6
+Using rails-deprecated_sanitizer 1.0.3
+Using globalid 0.3.6
+Using activemodel 5.0.0.beta3
+Installing jbuilder 2.4.1
+Using rails-html-sanitizer 1.0.3
+Installing spring-watcher-listen 2.0.0
+Using rails-dom-testing 1.0.7
+Using activejob 5.0.0.beta3
+Using activerecord 5.0.0.beta3
+Using actionview 5.0.0.beta3
+Using actionpack 5.0.0.beta3
+Using actioncable 5.0.0.beta3
+Using actionmailer 5.0.0.beta3
+Using railties 5.0.0.beta3
+Using sprockets-rails 3.0.3
+Installing coffee-rails 4.1.1
+Installing jquery-rails 4.1.0
+Installing web-console 3.1.1
+Using rails 5.0.0.beta3
+Installing sass-rails 5.0.4
+Bundle complete! 15 Gemfile dependencies, 63 gems now installed.
+Use `bundle show [gemname]` to see where a bundled gem is installed.
+         run  bundle exec spring binstub --all
+* bin/rake: spring inserted
+* bin/rails: spring inserted
+</code></pre>
+  </div>
+
+  <p>And navigate to the folder</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ cd stock-ticker
+</code></pre>
+  </div>
+
+  <h2 id="preparing-the-models-controllers-and-views">Preparing the models, controllers and views</h2>
+
+  <p>The stocks need to have a basic setup.  To do this a scaffold for the stocks is made.  The stocks will have a symbol and a price.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rails generate scaffold stock symbol:string price:decimal
+Running via Spring preloader in process 25276
+      invoke  active_record
+      create    db/migrate/(timestamp)_create_stocks.rb
+      create    app/models/stock.rb
+      invoke    test_unit
+      create      test/models/stock_test.rb
+      create      test/fixtures/stocks.yml
+      invoke  resource_route
+       route    resources :stocks
+      invoke  scaffold_controller
+      create    app/controllers/stocks_controller.rb
+      invoke    erb
+      create      app/views/stocks
+      create      app/views/stocks/index.html.erb
+      create      app/views/stocks/edit.html.erb
+      create      app/views/stocks/show.html.erb
+      create      app/views/stocks/new.html.erb
+      create      app/views/stocks/_form.html.erb
+      invoke    test_unit
+      create      test/controllers/stocks_controller_test.rb
+      invoke    helper
+      create      app/helpers/stocks_helper.rb
+      invoke      test_unit
+      invoke    jbuilder
+      create      app/views/stocks/index.json.jbuilder
+      create      app/views/stocks/show.json.jbuilder
+      invoke  assets
+      invoke    coffee
+      create      app/assets/javascripts/stocks.coffee
+      invoke    scss
+      create      app/assets/stylesheets/stocks.scss
+      invoke  scss
+      create    app/assets/stylesheets/scaffolds.scss
+</code></pre>
+  </div>
+
+  <p>And as a matter of completeness the scale and precision can be set for the price.  This step isn’t necessary and can be skipped.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># db/migrate/(timestamp)_create_stocks.rb</span>
+<span class="k">class</span> <span class="nc">CreateStocks</span> <span class="o">&lt;</span> <span class="no">ActiveRecord</span><span class="o">::</span><span class="no">Migration</span><span class="p">[</span><span class="mi">5</span><span class="o">.</span><span class="mi">0</span><span class="p">]</span>
+  <span class="k">def</span> <span class="nf">change</span>
+    <span class="n">create_table</span> <span class="ss">:stocks</span> <span class="k">do</span> <span class="o">|</span><span class="n">t</span><span class="o">|</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">string</span> <span class="ss">:symbol</span>
+      <span class="n">t</span><span class="p">.</span><span class="nf">decimal</span> <span class="ss">:price</span><span class="p">,</span> <span class="ss">precision: </span><span class="mi">8</span><span class="p">,</span> <span class="ss">scale: </span><span class="mi">2</span>
+
+      <span class="n">t</span><span class="p">.</span><span class="nf">timestamps</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <p>And then migrate.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rake db:migrate
+== (timestamp) CreateStocks: migrating =====================================
+-- create_table(:stocks)
+   -&gt; 0.0034s
+== (timestamp) CreateStocks: migrated (0.0036s) ============================
+</code></pre>
+  </div>
+
+  <h2 id="enabling-actioncable">Enabling ActionCable</h2>
+
+  <p>In order to start using ActionCable there are two things that need to be done.  First, 2 lines of CoffeeScript have to be uncommented.  These lines make the ‘App’ and ‘App.cable’ object available in other CoffeeScript files.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/assets/javascripts/cable.coffee
+# Action Cable provides the framework to deal with WebSockets in Rails.
+# You can generate new channels where WebSocket features live using the rails generate channel command.
+#
+# Turn on the cable connection by removing the comments after the require statements (and ensure it's also on in config/routes.rb).
+#
+#= require action_cable
+#= require_self
+#= require_tree ./channels
+#
+</span><span class="vi">@</span><span class="na">App</span> <span class="o">||=</span> <span class="p">{}</span>                               <span class="c1"># &lt;-- these lines
+</span><span class="nx">App</span><span class="p">.</span><span class="na">cable</span> <span class="o">=</span> <span class="nx">ActionCable</span><span class="p">.</span><span class="na">createConsumer</span><span class="p">()</span>  <span class="c1"># &lt;-- these lines
+</span></code></pre>
+  </div>
+
+  <p>Then the cable route has to be uncommented.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># config/routes.rb</span>
+<span class="no">Rails</span><span class="p">.</span><span class="nf">application</span><span class="p">.</span><span class="nf">routes</span><span class="p">.</span><span class="nf">draw</span> <span class="k">do</span>
+  <span class="n">resources</span> <span class="ss">:stocks</span>
+  <span class="c1"># For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html</span>
+
+  <span class="c1"># Serve websocket cable requests in-process</span>
+  <span class="n">mount</span> <span class="no">ActionCable</span><span class="p">.</span><span class="nf">server</span> <span class="o">=&gt;</span> <span class="s1">'/cable'</span> <span class="c1"># &lt;-- this line</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <h2 id="the-actioncable-portion">The ActionCable Portion</h2>
+  <p>Now to generate a channel for the stocks.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code>$ rails generate channel stocks follow unfollow_all
+Running via Spring preloader in process 25935
+      create  app/channels/stocks_channel.rb
+      create  app/assets/javascripts/channels/stocks.coffee
+</code></pre>
+  </div>
+
+  <p>Channel generation accepts the channel’s name and then a list of methods.  In this case the channel name is stocks and it has a follow method and a unfollow_all method.</p>
+
+  <p>Now that there is a channel for the stocks there has to be a stream to distribute data as well.  For now all consumers will be listening to the stream “stock_stream:all_stocks” and all data will be transmitted over this stream.  Streams are an ephemeral thing that can appear and disappear when a user starts listening or all users stop listening to it.  This means that there is no need to predefine streams.  Another thing is the appearance of the word “consumer”, this word means “WebSocket client” in the ActionCable lexicon.  The code below sets each consumer to listen to “stock_stream:all_stocks” as soon as they connect.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/channels/stocks_channel.rb</span>
+<span class="c1"># Be sure to restart your server when you modify this file. Action Cable runs in a loop that does not support auto reloading.</span>
+<span class="k">class</span> <span class="nc">StocksChannel</span> <span class="o">&lt;</span> <span class="no">ApplicationCable</span><span class="o">::</span><span class="no">Channel</span>
+  <span class="k">def</span> <span class="nf">subscribed</span>
+    <span class="n">stream_from</span> <span class="s2">"stock_stream:all_stocks"</span>  <span class="c1"># Added default stream</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">unsubscribed</span>
+    <span class="c1"># Any cleanup needed when channel is unsubscribed</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">follow</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">unfollow_all</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <p>The broadcast method, shown below, broadcasts data to every consumer listening to a stream.
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="no">ActionCable</span><span class="p">.</span><span class="nf">server</span><span class="p">.</span><span class="nf">broadcast</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">payload</span><span class="p">)</span>
+</code></pre>
+  </div>
+
+  <p>To make the client update the stock price when it changes there needs to be a broadcast.  This can be achieved by creating a hook for database commits in the stock model to broadcast whenever the stock is updated.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/models/stock.rb</span>
+<span class="k">class</span> <span class="nc">Stock</span> <span class="o">&lt;</span> <span class="no">ApplicationRecord</span>
+  <span class="n">validates_format_of</span> <span class="ss">:symbol</span><span class="p">,</span> <span class="ss">with: </span><span class="sr">/\A[A-Za-z0-9]+\Z/</span><span class="p">,</span> <span class="ss">message: </span><span class="s2">"can only contain letters and numbers"</span>
+  <span class="n">validates</span> <span class="ss">:symbol</span><span class="p">,</span> <span class="ss">uniqueness: </span><span class="kp">true</span>
+
+  <span class="n">after_commit</span> <span class="ss">:broadcast</span><span class="p">,</span> <span class="ss">on: :update</span>
+
+  <span class="k">def</span> <span class="nf">broadcast</span>
+    <span class="no">ActionCable</span><span class="p">.</span><span class="nf">server</span><span class="p">.</span><span class="nf">broadcast</span><span class="p">(</span> <span class="s2">"stock_stream:all_stocks"</span><span class="p">,</span> <span class="p">{</span> <span class="ss">symbol: </span><span class="n">symbol</span><span class="p">,</span> <span class="ss">price: </span><span class="n">price</span><span class="p">.</span><span class="nf">to_f</span> <span class="p">}</span> <span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <p>A few validations are also added here.<br />
+With all clients listening to the “stock_stream:all_stocks” stream every consumer will receive the broadcast.</p>
+
+  <p>When channels are generated a parallel javascript file is made.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/assets/javascripts/channels/stocks.coffee
+</span><span class="nx">App</span><span class="p">.</span><span class="na">stocks</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="na">cable</span><span class="p">.</span><span class="na">subscriptions</span><span class="p">.</span><span class="na">create</span> <span class="s">"StocksChannel"</span><span class="p">,</span>
+  <span class="na">connected</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when the subscription is ready for use on the server
+</span>  
+  <span class="na">disconnected</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when the subscription has been terminated by the server
+</span>
+  <span class="na">received</span><span class="o">:</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when there's incoming data on the websocket for this channel
+</span>    <span class="nx">console</span><span class="p">.</span><span class="na">log</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="c1"># Log all incoming data
+</span>  
+  <span class="na">follow</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="vi">@</span><span class="na">perform</span> <span class="s">'follow'</span>
+  
+  <span class="na">unfollow_all</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="vi">@</span><span class="na">perform</span> <span class="s">'unfollow_all'</span>
+</code></pre>
+  </div>
+
+  <p>This file defines a class (App.stocks) with five functions.  The comments describe the first three nicely and the last two were specified in the generation.</p>
+
+  <p>For now all that needs to be done is console logging all received data to see that the stream is working.</p>
+
+  <p>Now try it!  And if you’ve been running the server be sure to restart it.</p>
+
+  <p>Create a stock in one tab and have the web console open in that same tab, then in another tab edit the stock.  Firefox logged this in the the first tab.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="nb">Object</span> <span class="p">{</span> <span class="na">symbol</span><span class="o">:</span> <span class="s">"LOP"</span><span class="p">,</span> <span class="na">price</span><span class="o">:</span> <span class="mf">3.43</span> <span class="p">}</span>
+</code></pre>
+  </div>
+
+  <p>In this case a stock with a symbol of “LOP” was created and then it’s price was edited to 3.43</p>
+
+  <h2 id="using-the-actioncable-portion">Using the ActionCable Portion</h2>
+
+  <p>Now that the information part has been worked out the data has to be used to update the stocks.  The first step here would be making the entry’s price findable by javascript.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c">&lt;!-- app/views/stocks/index.html.erb --&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">"notice"</span><span class="nt">&gt;</span><span class="cp">&lt;%=</span> <span class="n">notice</span> <span class="cp">%&gt;</span><span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;h1&gt;</span>Stocks<span class="nt">&lt;/h1&gt;</span>
+
+<span class="nt">&lt;table&gt;</span>
+  <span class="nt">&lt;thead&gt;</span>
+    <span class="nt">&lt;tr&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Symbol<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th&gt;</span>Price<span class="nt">&lt;/th&gt;</span>
+      <span class="nt">&lt;th</span> <span class="na">colspan=</span><span class="s">"3"</span><span class="nt">&gt;&lt;/th&gt;</span>
+    <span class="nt">&lt;/tr&gt;</span>
+  <span class="nt">&lt;/thead&gt;</span>
+
+  <span class="nt">&lt;tbody&gt;</span>
+    <span class="cp">&lt;%</span> <span class="vi">@stocks</span><span class="p">.</span><span class="nf">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">stock</span><span class="o">|</span> <span class="cp">%&gt;</span>
+      <span class="nt">&lt;tr</span> <span class="na">id=</span><span class="s">"</span><span class="cp">&lt;%=</span> <span class="n">stock</span><span class="p">.</span><span class="nf">symbol</span> <span class="cp">%&gt;</span><span class="s">"</span><span class="nt">&gt;</span>  <span class="c">&lt;!-- Added an id so javascript can find the row of a specific stock --&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;%=</span> <span class="n">stock</span><span class="p">.</span><span class="nf">symbol</span> <span class="cp">%&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td</span> <span class="na">id=</span><span class="s">"price"</span><span class="nt">&gt;</span><span class="cp">&lt;%=</span> <span class="n">stock</span><span class="p">.</span><span class="nf">price</span> <span class="cp">%&gt;</span><span class="nt">&lt;/td&gt;</span>  <span class="c">&lt;!-- Added an id so javascript can find the price column of a stock --&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'Show'</span><span class="p">,</span> <span class="n">stock</span> <span class="cp">%&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'Edit'</span><span class="p">,</span> <span class="n">edit_stock_path</span><span class="p">(</span><span class="n">stock</span><span class="p">)</span> <span class="cp">%&gt;</span><span class="nt">&lt;/td&gt;</span>
+        <span class="nt">&lt;td&gt;</span><span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'Destroy'</span><span class="p">,</span> <span class="n">stock</span><span class="p">,</span> <span class="ss">method: :delete</span><span class="p">,</span> <span class="ss">data: </span><span class="p">{</span> <span class="ss">confirm: </span><span class="s1">'Are you sure?'</span> <span class="p">}</span> <span class="cp">%&gt;</span><span class="nt">&lt;/td&gt;</span>
+      <span class="nt">&lt;/tr&gt;</span>
+    <span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span>
+  <span class="nt">&lt;/tbody&gt;</span>
+<span class="nt">&lt;/table&gt;</span>
+
+<span class="nt">&lt;br&gt;</span>
+
+<span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'New Stock'</span><span class="p">,</span> <span class="n">new_stock_path</span> <span class="cp">%&gt;</span>
+</code></pre>
+  </div>
+
+  <p>In the received function of the channel the price is updated.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/assets/javascripts/channels/stocks.coffee
+</span>  <span class="na">received</span><span class="o">:</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when there's incoming data on the websocket for this channel
+</span>    <span class="nx">console</span><span class="p">.</span><span class="na">log</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="c1"># This will be left alone for debug purposes
+</span>    
+    <span class="nx">$</span><span class="p">(</span><span class="s">"#"</span> <span class="o">+</span> <span class="nx">data</span><span class="p">.</span><span class="na">symbol</span> <span class="o">+</span> <span class="s">" #price"</span><span class="p">).</span><span class="na">text</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="na">price</span><span class="p">)</span>
+</code></pre>
+  </div>
+
+  <p>This is usable and you can demo it now.  Again, remember to restart the server.</p>
+
+  <h2 id="refining-the-actioncable-portion">Refining the ActionCable Portion</h2>
+
+  <p>This is all well and good so far but there is an issue here.</p>
+
+  <p>No matter where the user is on the site they are listening to all the stocks.  Whether they are looking at a single stock or even none at all.  To fix this the consumer needs to be made to listen to a specific stream.</p>
+
+  <p>To tackle this problem the capabilities of streams has to be used.  A ‘stream-id’ data attribute will be made and placed in the body of the page.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c">&lt;!-- app/views/layouts/application.html.erb --&gt;</span>
+<span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="nt">&lt;html&gt;</span>
+  <span class="nt">&lt;head&gt;</span>
+    <span class="nt">&lt;title&gt;</span>StockTicker<span class="nt">&lt;/title&gt;</span>
+    <span class="cp">&lt;%=</span> <span class="n">csrf_meta_tags</span> <span class="cp">%&gt;</span>
+    <span class="cp">&lt;%=</span> <span class="n">action_cable_meta_tag</span> <span class="cp">%&gt;</span>
+
+    <span class="cp">&lt;%=</span> <span class="n">stylesheet_link_tag</span>    <span class="s1">'application'</span><span class="p">,</span> <span class="ss">media: </span><span class="s1">'all'</span><span class="p">,</span> <span class="s1">'data-turbolinks-track'</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="cp">%&gt;</span>
+    <span class="cp">&lt;%=</span> <span class="n">javascript_include_tag</span> <span class="s1">'application'</span><span class="p">,</span> <span class="s1">'data-turbolinks-track'</span> <span class="o">=&gt;</span> <span class="kp">true</span> <span class="cp">%&gt;</span>
+  <span class="nt">&lt;/head&gt;</span>
+
+  <span class="nt">&lt;body</span><span class="cp">&lt;%</span> <span class="k">if</span> <span class="n">content_for?</span> <span class="ss">:stock_id</span> <span class="cp">%&gt;</span> <span class="na">data-stream-id=</span><span class="s">"</span><span class="cp">&lt;%=</span> <span class="k">yield</span><span class="p">(</span> <span class="ss">:stock_id</span> <span class="p">)</span> <span class="cp">%&gt;</span><span class="s">"</span><span class="cp">&lt;%</span> <span class="k">end</span> <span class="cp">%&gt;</span><span class="nt">&gt;</span> <span class="c">&lt;!-- Add data-stream-id attribute if :stock_id is present --&gt;</span>
+    <span class="cp">&lt;%=</span> <span class="k">yield</span> <span class="cp">%&gt;</span>
+  <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+  </div>
+
+  <p>And the views will supply the stream-id</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c">&lt;!-- app/views/stocks/index.html.erb --&gt;</span>
+<span class="cp">&lt;%</span> <span class="n">provide</span> <span class="ss">:stock_id</span><span class="p">,</span> <span class="s2">"all_stocks"</span> <span class="cp">%&gt;</span>
+...
+</code></pre>
+  </div>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c">&lt;!-- app/views/stocks/show.html.erb --&gt;</span>
+<span class="cp">&lt;%</span> <span class="n">provide</span> <span class="ss">:stock_id</span><span class="p">,</span> <span class="vi">@stock</span><span class="p">.</span><span class="nf">symbol</span> <span class="cp">%&gt;</span>
+<span class="nt">&lt;p</span> <span class="na">id=</span><span class="s">"notice"</span><span class="nt">&gt;</span><span class="cp">&lt;%=</span> <span class="n">notice</span> <span class="cp">%&gt;</span><span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"</span><span class="cp">&lt;%=</span> <span class="vi">@stock</span><span class="p">.</span><span class="nf">symbol</span> <span class="cp">%&gt;</span><span class="s">"</span><span class="nt">&gt;</span>  <span class="c">&lt;!-- Wrap in container with id set to the stock symbol --&gt;</span>
+  <span class="nt">&lt;p&gt;</span>
+    <span class="nt">&lt;strong&gt;</span>Symbol:<span class="nt">&lt;/strong&gt;</span>
+    <span class="cp">&lt;%=</span> <span class="vi">@stock</span><span class="p">.</span><span class="nf">symbol</span> <span class="cp">%&gt;</span>
+  <span class="nt">&lt;/p&gt;</span>
+
+  <span class="nt">&lt;p&gt;</span>
+    <span class="nt">&lt;strong&gt;</span>Price:<span class="nt">&lt;/strong&gt;</span>
+    <span class="nt">&lt;span</span> <span class="na">id=</span><span class="s">"price"</span><span class="nt">&gt;</span><span class="cp">&lt;%=</span> <span class="vi">@stock</span><span class="p">.</span><span class="nf">price</span> <span class="cp">%&gt;</span><span class="nt">&lt;/span&gt;</span> <span class="c">&lt;!-- Set element that contains the price's id to 'price'--&gt;</span>
+  <span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;div&gt;</span>
+
+<span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'Edit'</span><span class="p">,</span> <span class="n">edit_stock_path</span><span class="p">(</span><span class="vi">@stock</span><span class="p">)</span> <span class="cp">%&gt;</span> |
+<span class="cp">&lt;%=</span> <span class="n">link_to</span> <span class="s1">'Back'</span><span class="p">,</span> <span class="n">stocks_path</span> <span class="cp">%&gt;</span>
+</code></pre>
+  </div>
+
+  <p>In both of these edits a call to ‘provide’ sets the ‘stream-id’.  In the second edit, in the same way that the entry’s price was made findable by javascript in the index view, the show view was formatted to behave similarly.</p>
+
+  <p>Then javascript can access the stream-id attribute.  Finish the follow function that was generated and have it be called after the user connects and for every page change.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/assets/javascripts/channels/stocks.coffee
+</span><span class="nx">App</span><span class="p">.</span><span class="na">stocks</span> <span class="o">=</span> <span class="nx">App</span><span class="p">.</span><span class="na">cable</span><span class="p">.</span><span class="na">subscriptions</span><span class="p">.</span><span class="na">create</span> <span class="s">"StocksChannel"</span><span class="p">,</span>
+  <span class="na">connected</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when the subscription is ready for use on the server
+</span>    <span class="nx">unless</span> <span class="vi">@</span><span class="na">callbackSet</span>  <span class="c1"># set a callback to listen to the new stream after every page change.
+</span>      <span class="nx">$</span><span class="p">(</span><span class="nb">document</span><span class="p">).</span><span class="na">on</span> <span class="s">'turbolinks:load'</span><span class="p">,</span> <span class="o">-&gt;</span> <span class="nx">App</span><span class="p">.</span><span class="na">stocks</span><span class="p">.</span><span class="na">follow</span><span class="p">()</span>
+      <span class="vi">@</span><span class="na">callbackSet</span> <span class="o">=</span> <span class="no">true</span>
+    <span class="vi">@</span><span class="na">follow</span><span class="p">()</span> <span class="c1"># Call follow the initial time.
+</span>
+  <span class="na">disconnected</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when the subscription has been terminated by the server
+</span>
+  <span class="na">received</span><span class="o">:</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="c1"># Called when there's incoming data on the websocket for this channel
+</span>    <span class="nx">console</span><span class="p">.</span><span class="na">log</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="c1"># this will be left alone for debug purposes
+</span>    
+    <span class="nx">$</span><span class="p">(</span><span class="s">"#"</span> <span class="o">+</span> <span class="nx">data</span><span class="p">.</span><span class="na">symbol</span> <span class="o">+</span> <span class="s">" #price"</span><span class="p">).</span><span class="na">text</span><span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="na">price</span><span class="p">)</span>
+
+  <span class="na">follow</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="vi">@</span><span class="na">unfollow_all</span><span class="p">()</span>  <span class="c1"># Stop listening to all streams
+</span>    <span class="k">if</span> <span class="nx">$</span><span class="p">(</span><span class="s">"body"</span><span class="p">).</span><span class="na">attr</span><span class="p">(</span><span class="s">"data-stream-id"</span><span class="p">)</span>  <span class="c1"># Listen to next stream if there is one.
+</span>      <span class="vi">@</span><span class="na">perform</span> <span class="s">'follow'</span><span class="p">,</span> <span class="na">stock</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="s">"body"</span><span class="p">).</span><span class="na">data</span><span class="p">(</span><span class="s">"stream-id"</span><span class="p">)</span>
+  
+  <span class="na">unfollow_all</span><span class="o">:</span> <span class="o">-&gt;</span>
+    <span class="vi">@</span><span class="na">perform</span> <span class="s">'unfollow_all'</span>
+</code></pre>
+  </div>
+
+  <p>When the javascript function ‘follow’ is called it calls the serverside method ‘unfollow_all’.  ‘unfollow_all’  calls ‘stop_all_streams’ which stops all streams to the user.  It then calls ‘follow’ serverside and passes it a variable called ‘stock’.
+Methods on the rails side of things only get called with one variable and in this case it is named ‘data’.
+‘data’ contains a hash of all the variables passed in from javascript.  The variable passed through javascript is ‘stock’ and it can be accessed in the method through data[‘stock’]</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/channels/stocks_channel.rb</span>
+<span class="k">class</span> <span class="nc">StocksChannel</span> <span class="o">&lt;</span> <span class="no">ApplicationCable</span><span class="o">::</span><span class="no">Channel</span>
+  <span class="k">def</span> <span class="nf">subscribed</span> <span class="c1"># Default stream removed</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">unsubscribed</span>
+    <span class="c1"># Any cleanup needed when channel is unsubscribed</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">follow</span><span class="p">(</span> <span class="n">data</span> <span class="p">)</span> <span class="c1"># Added data variable</span>
+    <span class="n">stream_from</span> <span class="s2">"stock_stream:</span><span class="si">#{</span><span class="n">data</span><span class="p">[</span><span class="s1">'stock'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span> <span class="c1"># Added specific stock stream</span>
+  <span class="k">end</span>
+
+  <span class="k">def</span> <span class="nf">unfollow_all</span>
+    <span class="n">stop_all_streams</span> <span class="c1"># Added call to 'stop_all_streams'</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <p>Adding another broadcast that broadcasts to the single stock stream finishes off that problem.</p>
+
+  <div class="highlighter-rouge"><pre class="highlight"><code><span class="c1"># app/models/stock.rb</span>
+<span class="k">class</span> <span class="nc">Stock</span> <span class="o">&lt;</span> <span class="no">ApplicationRecord</span>
+  <span class="n">validates_format_of</span> <span class="ss">:symbol</span><span class="p">,</span> <span class="ss">with: </span><span class="sr">/\A[A-Za-z0-9]+\Z/</span><span class="p">,</span> <span class="ss">message: </span><span class="s2">"can only contain letters and numbers"</span>
+  <span class="n">validates</span> <span class="ss">:symbol</span><span class="p">,</span> <span class="ss">uniqueness: </span><span class="kp">true</span>
+
+  <span class="n">after_commit</span> <span class="ss">:broadcast</span><span class="p">,</span> <span class="ss">on: :update</span>
+
+  <span class="k">def</span> <span class="nf">broadcast</span>
+    <span class="no">ActionCable</span><span class="p">.</span><span class="nf">server</span><span class="p">.</span><span class="nf">broadcast</span><span class="p">(</span> <span class="s2">"stock_stream:</span><span class="si">#{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>  <span class="p">{</span> <span class="ss">symbol: </span><span class="n">symbol</span><span class="p">,</span> <span class="ss">price: </span><span class="n">price</span><span class="p">.</span><span class="nf">to_f</span> <span class="p">}</span> <span class="p">)</span> <span class="c1"># Added specific stock broadcast</span>
+    <span class="no">ActionCable</span><span class="p">.</span><span class="nf">server</span><span class="p">.</span><span class="nf">broadcast</span><span class="p">(</span> <span class="s2">"stock_stream:all_stocks"</span><span class="p">,</span> <span class="p">{</span> <span class="ss">symbol: </span><span class="n">symbol</span><span class="p">,</span> <span class="ss">price: </span><span class="n">price</span><span class="p">.</span><span class="nf">to_f</span> <span class="p">}</span> <span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</code></pre>
+  </div>
+
+  <p>And there it is, finished.  Remember to restart the server…</p>
+
+  <p>To see the last change create multiple stocks and view one.</p>
+
+  <p>When you edit that one in another tab the consumer will receive the change but when you change the other stock one no data will be broadcast to the consumer.</p>
+
+  <h2 id="diagrams">Diagrams</h2>
+  <p>Here are a few diagrams to explain how this ActionCable example works.</p>
+  <div class="image-and-text">
+<img src="assets/rails actionCable Diagram 1.png" />
+<span>
+This diagram above shows how a consumer can send data to a channel through perform.  In this case a function called perform is being called on the App.stocks object.  This sends a request to the channel to execute the 'follow' method and pass the stock variable to it.  The channel then subscribes the consumer to the stock.
+</span>
+</div>
+
+  <div class="image-and-text">
+<img src="assets/rails actionCable Diagram 2.1.png" />
+<span>
+When the consumer is listening to the stream it can then receive updates broadcasted on that stream without the consumer having to know the data is coming.  In this case there are three consumers, one that is listening to a specific stock "LOP" and two subscribed to "all_stocks".  With the broadcast shown in the above diagram the one that is only subscribed to "LOP" receives nothing and both subscribed to "all_stocks" receive the data.
+</span>
+</div>
+
+  <div class="image-and-text">
+<img src="assets/rails actionCable Diagram 2.2.png" />
+<span>
+This broadcast in the above diagram is the opposite with the one subscribed to "LOP" receiving the data and the other two receiving nothing.
+</span>
+</div>
+
+  <h2 id="copyright-notices-and-such">Copyright Notices and Such</h2>
+
+  <p>All text and images are copyrighted © 2016 Daniel Machen</p>
+
+  <p>All source code is available under the MIT License.</p>
+  <div id="code-license">
+The MIT License<br /><br />
+
+Copyright (c) 2016 Daniel Machen<br /><br />
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:<br /><br />
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.<br /><br />
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.<br />
+
+</div>
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-left">
+        <ul class="contact-list">
+          <li>ActionCable Stock Ticker Tutorial</li>
+          <li><a href="mailto:daniel@danielmachen.net">daniel@danielmachen.net</a></li>
+          <li>
+          
+            <a href="https://github.com/DanielMachen"><span class="icon icon--github"><svg viewBox="0 0 16 16"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">DanielMachen</span></a>
+
+          
+          </li>
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-right">
+        <p>Rails ActionCable allows you to open a socket connection from inside rails to the client.   This tutorial shows a simple Rails stock ticker example utilizing ActionCable.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
