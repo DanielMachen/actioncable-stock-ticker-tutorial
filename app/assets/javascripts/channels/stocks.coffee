@@ -1,6 +1,10 @@
 App.stocks = App.cable.subscriptions.create "StocksChannel",
   connected: ->
     # Called when the subscription is ready for use on the server
+    unless @callbackSet  # set a callback to listen to the new stream after every page change.
+      $(document).on 'turbolinks:load', -> App.stocks.follow()
+      @callbackSet = true
+    @follow() # Call follow the initial time.
 
   disconnected: ->
     # Called when the subscription has been terminated by the server
@@ -11,7 +15,9 @@ App.stocks = App.cable.subscriptions.create "StocksChannel",
     $("#" + data.symbol + " #price").text(data.price)
 
   follow: ->
-    @perform 'follow'
+    @unfollow_all()  # Stop listening to all streams
+    if $("body").attr("data-stream-id")  # Listen to next stream if there is one.
+      @perform 'follow', stock: $("body").data("stream-id")
 
   unfollow_all: ->
     @perform 'unfollow_all'

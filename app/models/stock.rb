@@ -5,6 +5,7 @@ class Stock < ApplicationRecord
   after_commit :broadcast, on: :update
 
   def broadcast
+    ActionCable.server.broadcast( "stock_stream:#{symbol}",  { symbol: symbol, price: price.to_f } ) # Added specific stock broadcast
     ActionCable.server.broadcast( "stock_stream:all_stocks", { symbol: symbol, price: price.to_f } )
   end
 end
