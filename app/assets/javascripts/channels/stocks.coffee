@@ -8,6 +8,7 @@ App.stocks = App.cable.subscriptions.create "StocksChannel",
   received: (data) ->
     # Called when there's incoming data on the websocket for this channel
     console.log(data)
+    $("#" + data.symbol + " #price").text(data.price)
 
   follow: ->
     @perform 'follow'
